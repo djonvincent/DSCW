@@ -12,13 +12,19 @@ with open('ratings.csv', newline='') as f:
         totals[movie_id] += float(row[1])
         nums[movie_id] += 1
 
+with open('movies.csv', newline='') as f:
+    reader = csv.reader(f, delimiter=',')
+    next(reader)
+    titles = dict(row[:2] for row in reader)
+
 @Pyro4.expose
 class MovieRating:
     def get_movie(self, movie_id):
        return {
+            'title': titles[movie_id],
             'avg': totals[movie_id] / nums[movie_id],
             'num': nums[movie_id]
-            }
+        }
 
     def add_rating(self, movie_id, rating):
         if rating < 0 or rating > 5:
