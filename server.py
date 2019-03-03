@@ -2,6 +2,8 @@ import Pyro4
 import csv
 from collections import defaultdict
 
+PYRONAME = 'MovieRating'
+
 with open('ratings.csv', newline='') as f:
     reader = csv.reader(f, delimiter=',')
     next(reader)
@@ -36,7 +38,13 @@ class MovieRating:
 daemon = Pyro4.Daemon()
 ns = Pyro4.locateNS()
 uri = daemon.register(MovieRating)
-ns.register('MovieRating', uri)
+highest = -1
+for key in ns.list(prefix=PYRONAME):
+    i = int(key[len(PYRONAME):])
+    if i > highest:
+        highest = i
+name = f'{PYRONAME}{highest+1}'
+ns.register(name, uri)
 
 print('Ready')
 daemon.requestLoop()
