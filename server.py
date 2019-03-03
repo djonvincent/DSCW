@@ -9,10 +9,16 @@ class MovieRating:
                 'num': 2
             }
         }
-    def get_rating(self, name):
-       return self.movies[name]['avg']
+    def get_movie(self, name):
+       return self.movies[name]
 
     def add_rating(self, name, rating):
+        if name not in self.movies:
+            self.movies[name] = {
+                'avg': rating,
+                'num': 1
+            }
+            return
         movie = self.movies[name]
         avg = movie['avg']
         num = movie['num']
