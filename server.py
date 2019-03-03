@@ -1,29 +1,31 @@
 import Pyro4
+import csv
+from collections import defaultdict
+
+with open('ratings.csv', newline='') as f:
+    reader = csv.reader(f, delimiter=',')
+    next(reader)
+    totals = defaultdict(int)
+    nums = defaultdict(int)
+    for row in reader:
+        movie_id = row[0]
+        totals[movie_id] += float(row[1])
+        nums[movie_id] += 1
 
 @Pyro4.expose
 class MovieRating:
-    def __init__(self):
-        self.movies = {
-            'A': {
-                'avg': 4,
-                'num': 2
+    def get_movie(self, movie_id):
+       return {
+            'avg': totals[movie_id] / nums[movie_id],
+            'num': nums[movie_id]
             }
-        }
-    def get_movie(self, name):
-       return self.movies[name]
 
-    def add_rating(self, name, rating):
-        if name not in self.movies:
-            self.movies[name] = {
-                'avg': rating,
-                'num': 1
-            }
-            return
-        movie = self.movies[name]
-        avg = movie['avg']
-        num = movie['num']
-        self.movies[name]['avg'] = (avg*num + rating)/(num+1)
-        movie['num'] += 1
+    def add_rating(self, movie_id, rating):
+        if rating < 0 or rating > 5:
+            raise ValueError('Rating must be between 0 and 5')
+        totals[movie_id] += rating
+        nums[movie_id] += 1
+        return
 
 daemon = Pyro4.Daemon()
 ns = Pyro4.locateNS()
