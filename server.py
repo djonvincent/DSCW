@@ -38,12 +38,12 @@ class MovieRating:
 daemon = Pyro4.Daemon()
 ns = Pyro4.locateNS()
 uri = daemon.register(MovieRating)
-highest = -1
+next_id = -1
 for key in ns.list(prefix=PYRONAME):
     i = int(key[len(PYRONAME):])
-    if i > highest:
-        highest = i
-name = f'{PYRONAME}{highest+1}'
+    if i > next_id:
+        next_id = i
+name = f'{PYRONAME}{next_id+1}'
 ns.register(name, uri)
 
 print('Ready')
