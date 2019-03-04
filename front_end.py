@@ -4,6 +4,7 @@ import random
 from flask import Flask, request, abort
 app = Flask(__name__)
 
+update_id = 0
 ns = Pyro4.locateNS()
 proxies = {}
 servers = []
@@ -55,9 +56,11 @@ def get_movie(movie_id):
 @app.route('/<movie_id>/rating', methods=['POST'])
 def post_rating(movie_id):
     refresh_servers()
+    global update_id
     try:
         rating = int(request.form['rating'])
-        execute('add_rating', movie_id, rating)
+        execute('add_rating', movie_id, rating, update_id)
+        update_id += 1
         return json.dumps({'status': 'updated'})
     except NoServersOnlineError:
         abort(503)

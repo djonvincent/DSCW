@@ -1,8 +1,14 @@
 import Pyro4
 import csv
+import time
+import threading
+import random
 from collections import defaultdict
 
 PYRONAME = 'MovieRating'
+
+proxies = {}
+servers = []
 
 with open('ratings.csv', newline='') as f:
     reader = csv.reader(f, delimiter=',')
@@ -21,6 +27,9 @@ with open('movies.csv', newline='') as f:
 
 @Pyro4.expose
 class MovieRating:
+    update_log = []
+    gossip_batch = []
+    last_gossip_time = time.time()
     def get_movie(self, movie_id):
        return {
             'title': titles[movie_id],
@@ -28,12 +37,29 @@ class MovieRating:
             'num': nums[movie_id]
         }
 
-    def add_rating(self, movie_id, rating):
+    def add_rating(self, movie_id, rating, update_id):
+        if update_id in MovieRating.update_log:
+            return
         if rating < 0 or rating > 5:
             raise ValueError('Rating must be between 0 and 5')
         totals[movie_id] += rating
         nums[movie_id] += 1
+        MovieRating.update_log.append(update_id)
+        MovieRating.gossip_batch.append((movie_id, rating, update_id))
         return
+
+    def gossip(self, gossip_stop):
+        if not gossip_stop.is_set():
+            threading.Timer(30, self.gossip, [gossip_stop]).start()
+        refresh_servers()
+        if len(servers) == 0:
+            return
+        server = random.choice(servers)
+        proxy = proxies[server]
+        batch = Pyro4.batch(proxy)
+        for update in MovieRating.gossip_batch:
+            batch.add_rating(*update)
+        batch()
 
 daemon = Pyro4.Daemon()
 ns = Pyro4.locateNS()
@@ -46,5 +72,19 @@ for key in ns.list(prefix=PYRONAME):
 name = f'{PYRONAME}{next_id+1}'
 ns.register(name, uri)
 
+def refresh_servers():
+    global proxies
+    global servers
+    proxies = {}
+    servers = []
+    for k, v in ns.list(prefix='MovieRating').items():
+        if k == name:
+            continue
+        proxies[k] = Pyro4.Proxy(v)
+        servers.append(k)
+
 print('Ready')
+movie_rating = MovieRating()
+gossip_stop = threading.Event()
+movie_rating.gossip(gossip_stop)
 daemon.requestLoop()
