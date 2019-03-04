@@ -52,7 +52,7 @@ class MovieRating:
         if not gossip_stop.is_set():
             threading.Timer(30, self.gossip, [gossip_stop]).start()
         refresh_servers()
-        if len(servers) == 0:
+        if len(servers) == 0 or len(gossip_batch) == 0:
             return
         server = random.choice(servers)
         proxy = proxies[server]
@@ -60,6 +60,7 @@ class MovieRating:
         for update in MovieRating.gossip_batch:
             batch.add_rating(*update)
         batch()
+        MovieRating.gossip_batch = []
 
 daemon = Pyro4.Daemon()
 ns = Pyro4.locateNS()
