@@ -6,6 +6,7 @@ import random
 from collections import defaultdict
 
 PYRONAME = 'MovieRating'
+OVERLOADED_PROB = 0.4
 
 proxies = {}
 servers = []
@@ -48,18 +49,25 @@ class MovieRating:
         MovieRating.gossip_batch.append((movie_id, rating, update_id))
         return
 
-    def gossip(self, gossip_stop):
-        if not gossip_stop.is_set():
-            threading.Timer(30, self.gossip, [gossip_stop]).start()
+    def get_status(self):
+        if random.random() < OVERLOADED_PROB:
+            return 'overloaded'
+        return 'online'
+
+    def gossip(self):
+        threading.Timer(10, self.gossip).start()
         refresh_servers()
-        if len(servers) == 0 or len(gossip_batch) == 0:
+        if len(servers) == 0 or len(MovieRating.gossip_batch) == 0:
             return
-        server = random.choice(servers)
-        proxy = proxies[server]
-        batch = Pyro4.batch(proxy)
-        for update in MovieRating.gossip_batch:
-            batch.add_rating(*update)
-        batch()
+        for server in servers:
+            proxy = proxies[server]
+            batch = Pyro4.batch(proxy)
+            for update in MovieRating.gossip_batch:
+                batch.add_rating(*update)
+            try:
+                batch()
+            except Pyro4.errors.CommunicationError:
+                ns.remove(server)
         MovieRating.gossip_batch = []
 
 daemon = Pyro4.Daemon()
@@ -86,6 +94,5 @@ def refresh_servers():
 
 print('Ready')
 movie_rating = MovieRating()
-gossip_stop = threading.Event()
-movie_rating.gossip(gossip_stop)
+movie_rating.gossip()
 daemon.requestLoop()

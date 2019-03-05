@@ -22,18 +22,29 @@ refresh_servers()
 class NoServersOnlineError(Exception):
     pass
 
-def execute(func, *args):
+def execute(func, *args, avoid=[]):
     if len(servers) == 0:
         raise NoServersOnlineError()
-    server = random.choice(servers)
+    servers_copy = servers[:]
+    for s in avoid:
+        servers_copy.remove(s)
+    if len(servers_copy) == 0:
+        servers_copy = servers[:]
+    server = random.choice(servers_copy)
     proxy = proxies[server]
     try:
+        status = proxy.get_status()
+        if status == 'overloaded':
+            print(server + ' is overloaded, trying another')
+            avoid.append(server)
+            return execute(func, *args, avoid=avoid)
         result = {}
         result['result'] = getattr(proxy, func)(*args)
         result['server'] = server
         return result
     except Pyro4.errors.CommunicationError:
         ns.remove(server)
+        servers.remove(server)
         return execute(func, *args)
 
 @app.errorhandler(404)
@@ -46,7 +57,7 @@ def not_found(error):
 def get_movie(movie_id):
     refresh_servers()
     try:
-        result = execute('get_movie', movie_id)
+        result = execute('get_movie', movie_id, avoid=[])
         return json.dumps(result)
     except NoServersOnlineError:
         abort(503)
@@ -59,7 +70,7 @@ def post_rating(movie_id):
     global update_id
     try:
         rating = int(request.form['rating'])
-        execute('add_rating', movie_id, rating, update_id)
+        execute('add_rating', movie_id, rating, update_id, avoid=[])
         update_id += 1
         return json.dumps({'status': 'updated'})
     except NoServersOnlineError:
