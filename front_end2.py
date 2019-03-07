@@ -45,9 +45,11 @@ class FrontEnd():
         proxy = proxies[server]
         try:
             status = proxy.get_status()
-            if status == 'overloaded' and len(avail) > 0:
-                print(server + ' is overloaded, trying another')
+            if status == 'overloaded' and len(avail) > 0 or status == 'offline':
+                print(f'{server} is {status}, trying another')
                 choose_from.remove(server)
+                if status == 'offline':
+                    servers.remove(server)
                 return self.execute(func, choose_from, *args)
             result = {}
             result['result'] = getattr(proxy, func)(*args)

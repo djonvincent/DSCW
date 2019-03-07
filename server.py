@@ -7,6 +7,7 @@ from collections import defaultdict
 
 PYRONAME = 'MovieRating'
 OVERLOADED_PROB = 0.4
+OFFLINE_PROB = 0.2
 
 proxies = {}
 servers = []
@@ -52,8 +53,11 @@ class MovieRating:
         return True
 
     def get_status(self):
-        if random.random() < OVERLOADED_PROB:
+        r = random.random()
+        if r < OVERLOADED_PROB:
             return 'overloaded'
+        elif r < OVERLOADED_PROB + OFFLINE_PROB:
+            return 'offline'
         return 'online'
 
     def gossip(self):
