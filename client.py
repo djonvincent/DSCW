@@ -3,7 +3,7 @@ import Pyro4
 fe = Pyro4.Proxy('PYRONAME:FrontEnd')
 
 while True:
-    print('\nWhat do you want to do?\n(1) Retrieve a movie\n(2) Rate a movie\n')
+    print('\nWhat do you want to do?\n(1) Retrieve a movie\n(2) Rate a movie\n(3) Exit')
     choice = input()
     if choice == '1':
         movie_id = input('Enter movie ID: ')
@@ -14,7 +14,8 @@ while True:
             else:
                 movie = result['result']
                 print('\nTitle: ' + movie['title'])
-                print(f'Rating: {movie["avg"]} ({movie["num"]} reviews)')
+                print(f'Rating: {round(movie["avg"], 3)} ({movie["num"]} reviews)')
+                print(f'(Processed by {result["server"]})')
         except KeyError:
             print('Movie not found')
     elif choice == '2':
@@ -34,7 +35,10 @@ while True:
                 print('Error: ' + result['error'])
             else:
                 print('Rating submitted')
+                print(f'(Processed by {result["server"]})')
         except KeyError:
             print('Movie not found')
         except ValueError:
             print('Please rate between 0 and 5')
+    elif choice == '3':
+        break

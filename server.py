@@ -5,7 +5,7 @@ import threading
 import random
 from collections import defaultdict
 
-PYRONAME = 'MovieRating'
+PYRONAME = 'ReplicaManager'
 OVERLOADED_PROB = 0.3
 OFFLINE_PROB = 0.1
 GOSSIP_INTERVAL = 15

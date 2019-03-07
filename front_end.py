@@ -10,7 +10,7 @@ def refresh_servers():
     global servers
     proxies = {}
     servers = []
-    for k, v in ns.list(prefix='MovieRating').items():
+    for k, v in ns.list(prefix='ReplicaManager').items():
         proxies[k] = Pyro4.Proxy(v)
         servers.append(k)
 refresh_servers()
