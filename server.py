@@ -20,6 +20,8 @@ with open('ratings.csv', newline='') as f:
         movie_id = row[0]
         totals[movie_id] += float(row[1])
         nums[movie_id] += 1
+    totals = dict(totals)
+    nums = dict(nums)
 
 with open('movies.csv', newline='') as f:
     reader = csv.reader(f, delimiter=',')
@@ -47,7 +49,7 @@ class MovieRating:
         nums[movie_id] += 1
         MovieRating.update_log.append(update_id)
         MovieRating.gossip_batch.append((movie_id, rating, update_id))
-        return
+        return True
 
     def get_status(self):
         if random.random() < OVERLOADED_PROB:
