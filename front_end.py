@@ -33,9 +33,8 @@ class FrontEnd():
         return self.execute('add_rating', servers[:], movie_id, rating, update_id)
 
     def execute(self, func, avail, *args):
-        print('servers', servers)
-        print('avail', avail)
         if len(servers) == 0:
+            print('No servers online')
             return {"error": "No replica managers online"}
         if len(avail) == 0:
             choose_from = servers[:]
@@ -54,8 +53,10 @@ class FrontEnd():
             result = {}
             result['result'] = getattr(proxy, func)(*args)
             result['server'] = server
+            print(f'Using {server}')
             return result
         except Pyro4.errors.CommunicationError:
+            print(f'{server} is offline, trying another')
             ns.remove(server)
             servers.remove(server)
             choose_from.remove(server)

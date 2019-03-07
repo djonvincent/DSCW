@@ -6,8 +6,9 @@ import random
 from collections import defaultdict
 
 PYRONAME = 'MovieRating'
-OVERLOADED_PROB = 0.4
-OFFLINE_PROB = 0.2
+OVERLOADED_PROB = 0.3
+OFFLINE_PROB = 0.1
+GOSSIP_INTERVAL = 15
 
 proxies = {}
 servers = []
@@ -61,7 +62,7 @@ class MovieRating:
         return 'online'
 
     def gossip(self):
-        threading.Timer(10, self.gossip).start()
+        threading.Timer(GOSSIP_INTERVAL, self.gossip).start()
         refresh_servers()
         if len(servers) == 0 or len(MovieRating.gossip_batch) == 0:
             return
