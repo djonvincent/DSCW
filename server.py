@@ -13,7 +13,7 @@ GOSSIP_INTERVAL = 15
 proxies = {}
 servers = []
 
-with open('ratings.csv', newline='') as f:
+with open('ratings.csv', newline='', encoding='utf-8') as f:
     reader = csv.reader(f, delimiter=',')
     next(reader)
     totals = defaultdict(int)
@@ -25,7 +25,7 @@ with open('ratings.csv', newline='') as f:
     totals = dict(totals)
     nums = dict(nums)
 
-with open('movies.csv', newline='') as f:
+with open('movies.csv', newline='', encoding='utf-8') as f:
     reader = csv.reader(f, delimiter=',')
     next(reader)
     titles = dict(row[:2] for row in reader)
